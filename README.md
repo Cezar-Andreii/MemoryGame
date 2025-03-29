@@ -26,31 +26,6 @@ Memory este un joc în care jucătorul trebuie să găsească perechi de cărți
 2. Deschideți soluția în Visual Studio
 3. Compilați și rulați proiectul
 
-## Structura proiectului
-
-```
-Memoryy/
-├── Models/                 # Modele de date
-│   ├── User.cs            # Model utilizator
-│   ├── Card.cs            # Model carte
-│   ├── Category.cs        # Model categorie
-│   ├── GameConfiguration.cs # Configurație joc
-│   └── UserStatistics.cs  # Statistici utilizator
-├── ViewModels/            # ViewModels
-│   ├── LoginViewModel.cs  # VM pentru autentificare
-│   ├── MainGameViewModel.cs # VM pentru jocul principal
-│   └── CustomGameViewModel.cs # VM pentru joc personalizat
-├── Views/                 # Interfețe
-│   ├── LoginWindow.xaml   # Fereastra de autentificare
-│   ├── MainGameWindow.xaml # Fereastra principală
-│   └── CustomGameWindow.xaml # Fereastra de configurare
-└── Services/              # Servicii
-    ├── UserService.cs     # Gestionare utilizatori
-    ├── CategoryService.cs # Gestionare categorii
-    ├── SaveGameService.cs # Salvare/încărcare joc
-    └── StatisticsService.cs # Gestionare statistici
-```
-
 ## Funcționalități
 
 ### Autentificare
@@ -95,8 +70,4 @@ Proiectul folosește arhitectura MVVM și implementează următoarele concepte:
 - Interfețe XAML pentru UI
 
 ## Autor
-
-[Numele tău]
-- Email: [email@institutionala.ro]
-- Grupa: [Numărul grupei]
-- Specializarea: [Specializarea] 
+Dragomir Cezar Andrei
