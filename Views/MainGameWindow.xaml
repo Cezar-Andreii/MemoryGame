@@ -1,0 +1,93 @@
+<Window x:Class="Memoryy.Views.MainGameWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Memory Game"
+        Height="600"
+        Width="800"
+        WindowStartupLocation="CenterScreen">
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="File">
+                <MenuItem Header="Category">
+                    <ComboBox ItemsSource="{Binding Categories}"
+                              SelectedItem="{Binding SelectedCategory}"
+                              Width="150"/>
+                </MenuItem>
+                <MenuItem Header="New Game"
+                          Command="{Binding NewGameCommand}"/>
+                <MenuItem Header="Custom Game"
+                          Command="{Binding CustomGameCommand}"/>
+                <MenuItem Header="Open Game"
+                          Command="{Binding LoadGameCommand}"/>
+                <MenuItem Header="Save Game"
+                          Command="{Binding SaveGameCommand}"/>
+                <MenuItem Header="Statistics"
+                          Command="{Binding ShowStatisticsCommand}"/>
+                <Separator/>
+                <MenuItem Header="Exit"
+                          Click="ExitMenuItem_Click"/>
+            </MenuItem>
+            <MenuItem Header="Options">
+                <MenuItem Header="Standard"/>
+                <MenuItem Header="Custom"/>
+            </MenuItem>
+            <MenuItem Header="Help">
+                <MenuItem Header="About"
+                          Command="{Binding ShowAboutCommand}"/>
+            </MenuItem>
+        </Menu>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0"
+                        Orientation="Horizontal"
+                        Margin="10">
+                <TextBlock Text="Time Remaining: "
+                           VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding TimeRemaining}"
+                           VerticalAlignment="Center"
+                           Margin="5,0,0,0"/>
+            </StackPanel>
+
+            <ItemsControl Grid.Row="1"
+                          ItemsSource="{Binding Cards}"
+                          Margin="10">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Rows="{Binding DataContext.CurrentConfig.Rows, 
+                                    RelativeSource={RelativeSource AncestorType=Window}}"
+                                     Columns="{Binding DataContext.CurrentConfig.Columns, 
+                                    RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Width="100"
+                                Height="100"
+                                Margin="5"
+                                Background="LightBlue"
+                                CornerRadius="5">
+                            <Grid>
+                                <Image Source="{Binding ImagePath}"
+                                       Stretch="UniformToFill"
+                                       Opacity="{Binding IsFlipped, Converter={StaticResource BooleanToOpacityConverter}}"/>
+                                <Rectangle Fill="Blue"
+                                           Opacity="{Binding IsFlipped, Converter={StaticResource InverseBooleanToOpacityConverter}}"/>
+                            </Grid>
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick"
+                                              Command="{Binding DataContext.CardClickCommand, 
+                                            RelativeSource={RelativeSource AncestorType=Window}}"
+                                              CommandParameter="{Binding}"/>
+                            </Border.InputBindings>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
+    </DockPanel>
+</Window> 
