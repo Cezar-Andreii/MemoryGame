@@ -1,35 +1,64 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Memoryy.Models;
 
 namespace Memoryy.Services
 {
     public class CategoryService
     {
-        private readonly List<Category> _categories;
+        private readonly string _imagesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images");
+        private List<Category> _categories;
 
         public CategoryService()
         {
-            _categories = new List<Category>
+            try
             {
-                new Category { Name = "Animale", ImagePaths = GetImagePaths("Animals") },
-                new Category { Name = "Fructe", ImagePaths = GetImagePaths("Fruits") },
-                new Category { Name = "Emoji", ImagePaths = GetImagePaths("Emojis") }
-            };
+                InitializeCategories();
+
+                _categories = new List<Category>
+                {
+                    new Category { Name = "Animale", ImagePaths = GetImagePaths("Animale") },
+                    new Category { Name = "Fructe", ImagePaths = GetImagePaths("Fructe") },
+                    new Category { Name = "Emoji", ImagePaths = GetImagePaths("Emoji") }
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Eroare la inițializarea categoriilor: {ex.Message}");
+            }
+        }
+
+        private void InitializeCategories()
+        {
+            if (!Directory.Exists(_imagesPath))
+            {
+                Directory.CreateDirectory(_imagesPath);
+            }
+
+            var categoryNames = new[] { "Animale", "Fructe", "Emoji" };
+            foreach (var categoryName in categoryNames)
+            {
+                var categoryPath = Path.Combine(_imagesPath, categoryName);
+                if (!Directory.Exists(categoryPath))
+                {
+                    Directory.CreateDirectory(categoryPath);
+                }
+            }
         }
 
         private List<string> GetImagePaths(string categoryFolder)
         {
             var paths = new List<string>();
-            string basePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", categoryFolder);
+            string categoryPath = Path.Combine(_imagesPath, categoryFolder);
 
-            if (Directory.Exists(basePath))
+            if (Directory.Exists(categoryPath))
             {
-                paths.AddRange(Directory.GetFiles(basePath, "*.*", SearchOption.TopDirectoryOnly)
+                paths.AddRange(Directory.GetFiles(categoryPath, "*.*", SearchOption.TopDirectoryOnly)
                     .Where(file => file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
                                  file.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
-                                 file.EndsWith(".gif", StringComparison.OrdinalIgnoreCase)));
+                                 file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)));
             }
 
             return paths;
@@ -43,6 +72,20 @@ namespace Memoryy.Services
         public Category GetCategoryByName(string name)
         {
             return _categories.FirstOrDefault(c => c.Name == name);
+        }
+
+        public List<string> GetImagesForCategory(string category)
+        {
+            var categoryPath = Path.Combine(_imagesPath, category);
+            if (!Directory.Exists(categoryPath))
+            {
+                return new List<string>();
+            }
+
+            return Directory.GetFiles(categoryPath, "*.png")
+                          .Concat(Directory.GetFiles(categoryPath, "*.jpg"))
+                          .Concat(Directory.GetFiles(categoryPath, "*.jpeg"))
+                          .ToList();
         }
     }
 }

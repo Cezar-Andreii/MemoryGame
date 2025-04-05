@@ -4,10 +4,10 @@ namespace Memoryy.Models
 {
     public class GameConfiguration
     {
-        public int Rows { get; set; }
-        public int Columns { get; set; }
-        public int TimeLimit { get; set; } // în secunde
-        public string CategoryName { get; set; }
+        public int Rows { get; set; } = 4;
+        public int Columns { get; set; } = 4;
+        public int TimeLimit { get; set; } = 300; // 5 minute în secunde
+        public string CategoryName { get; set; } = "Default";
         public DateTime StartTime { get; set; }
         public DateTime? LastSaveTime { get; set; }
 

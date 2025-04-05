@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -17,185 +18,297 @@ namespace Memoryy.ViewModels
         private readonly SaveGameService _saveGameService;
         private readonly StatisticsService _statisticsService;
         private readonly User _currentUser;
-        private readonly DispatcherTimer _gameTimer;
-        private readonly Random _random;
-        private ObservableCollection<Card> _cards;
-        private Card _firstCard;
-        private Card _secondCard;
-        private bool _isProcessing;
-        private string _selectedCategory;
-        private int _timeRemaining;
-        private GameConfiguration _currentConfig;
+        private readonly DispatcherTimer _timer;
+        private GameConfiguration _currentGameConfig;
+        private int _timeLeft;
+        private bool _isGameActive;
+        private bool _isGamePaused;
+        private Card _firstSelectedCard;
+        private Card _secondSelectedCard;
+        private int _pairsFound;
+        private int _movesMade;
+        private Category _selectedCategory;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public MainGameViewModel(User currentUser)
-        {
-            _categoryService = new CategoryService();
-            _saveGameService = new SaveGameService();
-            _statisticsService = new StatisticsService();
-            _currentUser = currentUser;
-            _random = new Random();
-            _gameTimer = new DispatcherTimer();
-            _gameTimer.Interval = TimeSpan.FromSeconds(1);
-            _gameTimer.Tick += GameTimer_Tick;
+        public ObservableCollection<Card> Cards { get; private set; }
+        public ObservableCollection<Category> Categories { get; private set; }
 
-            Categories = new ObservableCollection<string>(_categoryService.GetAllCategories().Select(c => c.Name));
-            Cards = new ObservableCollection<Card>();
-        }
-
-        public ObservableCollection<string> Categories { get; }
-        public ObservableCollection<Card> Cards
+        public GameConfiguration CurrentGameConfig
         {
-            get => _cards;
+            get => _currentGameConfig;
             set
             {
-                _cards = value;
-                OnPropertyChanged(nameof(Cards));
+                _currentGameConfig = value;
+                OnPropertyChanged(nameof(CurrentGameConfig));
             }
         }
 
-        public string SelectedCategory
+        public Category SelectedCategory
         {
             get => _selectedCategory;
             set
             {
                 _selectedCategory = value;
+                if (_selectedCategory != null)
+                {
+                    _currentGameConfig.CategoryName = _selectedCategory.Name;
+                }
                 OnPropertyChanged(nameof(SelectedCategory));
             }
         }
 
-        public int TimeRemaining
+        public ICommand NewGameCommand { get; }
+        public ICommand SaveGameCommand { get; }
+        public ICommand LoadGameCommand { get; }
+        public ICommand StatisticsCommand { get; }
+        public ICommand CustomGameCommand { get; }
+        public ICommand CardClickCommand { get; }
+        public ICommand ShowAboutCommand { get; }
+
+        public string TimeLeftText => $"Timp rămas: {TimeLeft / 60}:{TimeLeft % 60:D2}";
+        public string MovesText => $"Mutări: {MovesMade}";
+        public string PairsText => $"Perechi găsite: {PairsFound}";
+
+        public int TimeLeft
         {
-            get => _timeRemaining;
+            get => _timeLeft;
             set
             {
-                _timeRemaining = value;
-                OnPropertyChanged(nameof(TimeRemaining));
+                _timeLeft = value;
+                OnPropertyChanged(nameof(TimeLeft));
+                OnPropertyChanged(nameof(TimeLeftText));
             }
         }
 
-        public ICommand NewGameCommand => new RelayCommand(StartNewGame, CanStartNewGame);
-        public ICommand CustomGameCommand => new RelayCommand(StartCustomGame, CanStartNewGame);
-        public ICommand CardClickCommand => new RelayCommand<Card>(OnCardClick, CanClickCard);
-        public ICommand SaveGameCommand => new RelayCommand(SaveGame, () => _currentConfig != null);
-        public ICommand LoadGameCommand => new RelayCommand(LoadGame, () => _saveGameService.HasSavedGame(_currentUser.Username));
-        public ICommand ShowStatisticsCommand => new RelayCommand(ShowStatistics);
-        public ICommand ShowAboutCommand => new RelayCommand(ShowAbout);
+        public int MovesMade
+        {
+            get => _movesMade;
+            set
+            {
+                _movesMade = value;
+                OnPropertyChanged(nameof(MovesMade));
+                OnPropertyChanged(nameof(MovesText));
+            }
+        }
+
+        public int PairsFound
+        {
+            get => _pairsFound;
+            set
+            {
+                _pairsFound = value;
+                OnPropertyChanged(nameof(PairsFound));
+                OnPropertyChanged(nameof(PairsText));
+            }
+        }
+
+        public MainGameViewModel(User currentUser)
+        {
+            try
+            {
+                _currentUser = currentUser;
+                _categoryService = new CategoryService();
+                _saveGameService = new SaveGameService();
+                _statisticsService = new StatisticsService();
+
+                _timer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromSeconds(1)
+                };
+                _timer.Tick += Timer_Tick;
+
+                NewGameCommand = new RelayCommand(StartNewGame, CanStartNewGame);
+                SaveGameCommand = new RelayCommand(SaveGame);
+                LoadGameCommand = new RelayCommand(LoadGame);
+                StatisticsCommand = new RelayCommand(ShowStatistics);
+                CustomGameCommand = new RelayCommand(StartCustomGame);
+                CardClickCommand = new RelayCommand<Card>(OnCardClick, CanClickCard);
+                ShowAboutCommand = new RelayCommand(ShowAbout);
+
+                Categories = new ObservableCollection<Category>(_categoryService.GetAllCategories());
+                Cards = new ObservableCollection<Card>();
+
+                // Inițializare configurație implicită
+                _currentGameConfig = new GameConfiguration
+                {
+                    Rows = 4,
+                    Columns = 4,
+                    TimeLimit = 300,
+                    CategoryName = "Emoji",
+                    StartTime = DateTime.Now
+                };
+
+                if (Categories.Any())
+                {
+                    SelectedCategory = Categories.First();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Eroare la inițializarea ViewModel: {ex.Message}\n{ex.StackTrace}");
+            }
+        }
 
         private bool CanStartNewGame()
         {
-            return !string.IsNullOrEmpty(SelectedCategory);
-        }
-
-        private void StartNewGame()
-        {
-            var config = new GameConfiguration
-            {
-                Rows = 4,
-                Columns = 4,
-                TimeLimit = 300, // 5 minute
-                CategoryName = SelectedCategory,
-                StartTime = DateTime.Now
-            };
-
-            InitializeGame(config);
-        }
-
-        private void StartCustomGame()
-        {
-            var viewModel = new CustomGameViewModel();
-            viewModel.OnGameConfigurationSelected += (s, config) =>
-            {
-                config.CategoryName = SelectedCategory;
-                InitializeGame(config);
-            };
-
-            var window = new CustomGameWindow(viewModel);
-            window.ShowDialog();
-        }
-
-        private void InitializeGame(GameConfiguration config)
-        {
-            _currentConfig = config;
-            var category = _categoryService.GetCategoryByName(config.CategoryName);
-            var images = category.ImagePaths.OrderBy(x => _random.Next()).Take((config.Rows * config.Columns) / 2).ToList();
-            images.AddRange(images); // Duplicăm imaginile pentru perechi
-
-            Cards.Clear();
-            for (int i = 0; i < config.Rows; i++)
-            {
-                for (int j = 0; j < config.Columns; j++)
-                {
-                    Cards.Add(new Card(images[_random.Next(images.Count)], i, j));
-                }
-            }
-
-            TimeRemaining = config.TimeLimit;
-            _gameTimer.Start();
+            return SelectedCategory != null;
         }
 
         private bool CanClickCard(Card card)
         {
-            return !_isProcessing && !card.IsMatched && !card.IsFlipped;
+            return _isGameActive && !card.IsMatched && !card.IsFlipped;
         }
 
         private void OnCardClick(Card card)
         {
-            if (_firstCard == null)
+            if (_firstSelectedCard == null)
             {
-                _firstCard = card;
+                _firstSelectedCard = card;
                 card.IsFlipped = true;
             }
-            else if (_secondCard == null)
+            else if (_secondSelectedCard == null && card != _firstSelectedCard)
             {
-                _secondCard = card;
+                _secondSelectedCard = card;
                 card.IsFlipped = true;
                 CheckMatch();
             }
         }
 
-        private void CheckMatch()
+        private async void CheckMatch()
         {
-            _isProcessing = true;
-            if (_firstCard.ImagePath == _secondCard.ImagePath)
+            MovesMade++;
+
+            if (_firstSelectedCard.ImagePath == _secondSelectedCard.ImagePath)
             {
-                _firstCard.IsMatched = true;
-                _secondCard.IsMatched = true;
-                CheckGameEnd();
+                _firstSelectedCard.IsMatched = true;
+                _secondSelectedCard.IsMatched = true;
+                PairsFound++;
+
+                if (PairsFound == (_currentGameConfig.Rows * _currentGameConfig.Columns) / 2)
+                {
+                    _timer.Stop();
+                    _statisticsService.AddGameWon(_currentUser.Username);
+                    MessageBox.Show("Felicitări! Ai câștigat!", "Victorie", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
             }
             else
             {
-                System.Threading.Tasks.Task.Delay(1000).ContinueWith(_ =>
+                await System.Threading.Tasks.Task.Delay(1000);
+                _firstSelectedCard.IsFlipped = false;
+                _secondSelectedCard.IsFlipped = false;
+            }
+
+            _firstSelectedCard = null;
+            _secondSelectedCard = null;
+        }
+
+        private void StartNewGame()
+        {
+            try
+            {
+                if (_isGameActive)
                 {
-                    App.Current.Dispatcher.Invoke(() =>
+                    var result = MessageBox.Show(
+                        "Jocul curent va fi pierdut. Vrei să continui?",
+                        "Confirmare",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question);
+
+                    if (result == MessageBoxResult.No)
+                        return;
+                }
+
+                if (SelectedCategory == null)
+                {
+                    MessageBox.Show("Te rog selectează o categorie!");
+                    return;
+                }
+
+                _currentGameConfig.CategoryName = SelectedCategory.Name;
+                var category = _categoryService.GetCategoryByName(_currentGameConfig.CategoryName);
+
+                if (category == null)
+                {
+                    MessageBox.Show($"Categoria {_currentGameConfig.CategoryName} nu a fost găsită!");
+                    return;
+                }
+
+                if (category.ImagePaths.Count < (_currentGameConfig.Rows * _currentGameConfig.Columns) / 2)
+                {
+                    MessageBox.Show($"Nu sunt suficiente imagini în categoria {category.Name}!\n" +
+                                  $"Sunt necesare cel puțin {(_currentGameConfig.Rows * _currentGameConfig.Columns) / 2} imagini.");
+                    return;
+                }
+
+                InitializeGame();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Eroare la startarea jocului nou: {ex.Message}");
+            }
+        }
+
+        private void InitializeGame()
+        {
+            try
+            {
+                var category = _categoryService.GetCategoryByName(_currentGameConfig.CategoryName);
+                var random = new Random();
+                var selectedImages = category.ImagePaths
+                    .OrderBy(x => random.Next())
+                    .Take((_currentGameConfig.Rows * _currentGameConfig.Columns) / 2)
+                    .ToList();
+
+                Cards.Clear();
+                var cardPairs = new List<Card>();
+
+                int cardIndex = 0;
+                for (int row = 0; row < _currentGameConfig.Rows; row++)
+                {
+                    for (int col = 0; col < _currentGameConfig.Columns; col++)
                     {
-                        _firstCard.IsFlipped = false;
-                        _secondCard.IsFlipped = false;
-                        _firstCard = null;
-                        _secondCard = null;
-                        _isProcessing = false;
-                    });
-                });
+                        if (cardIndex < selectedImages.Count)
+                        {
+                            cardPairs.Add(new Card(selectedImages[cardIndex], row, col));
+                            cardPairs.Add(new Card(selectedImages[cardIndex], row, col));
+                            cardIndex++;
+                        }
+                    }
+                }
+
+                cardPairs = cardPairs.OrderBy(x => random.Next()).ToList();
+
+                foreach (var card in cardPairs)
+                {
+                    Cards.Add(card);
+                }
+
+                TimeLeft = _currentGameConfig.TimeLimit;
+                MovesMade = 0;
+                PairsFound = 0;
+                _isGameActive = true;
+                _timer.Start();
+                _currentGameConfig.StartTime = DateTime.Now;
+                _statisticsService.AddGamePlayed(_currentUser.Username);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Eroare la inițializarea jocului: {ex.Message}");
             }
         }
 
-        private void CheckGameEnd()
+        protected virtual void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
         {
-            if (Cards.All(c => c.IsMatched))
-            {
-                _gameTimer.Stop();
-                _statisticsService.AddGameWon(_currentUser.Username);
-                MessageBox.Show("Felicitări! Ai câștigat!", "Victorie", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private void GameTimer_Tick(object sender, EventArgs e)
+        private void Timer_Tick(object sender, EventArgs e)
         {
-            TimeRemaining--;
-            if (TimeRemaining <= 0)
+            TimeLeft--;
+            if (TimeLeft <= 0)
             {
-                _gameTimer.Stop();
+                _timer.Stop();
                 _statisticsService.AddGamePlayed(_currentUser.Username);
                 MessageBox.Show("Timpul a expirat!", "Game Over", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -203,12 +316,12 @@ namespace Memoryy.ViewModels
 
         private void SaveGame()
         {
-            if (_currentConfig == null) return;
+            if (_currentGameConfig == null) return;
 
             var savedGame = new SavedGame
             {
                 Username = _currentUser.Username,
-                Configuration = _currentConfig,
+                Configuration = _currentGameConfig,
                 SaveTime = DateTime.Now,
                 Cards = Cards.Select(c => new CardState
                 {
@@ -233,8 +346,7 @@ namespace Memoryy.ViewModels
                 return;
             }
 
-            _currentConfig = savedGame.Configuration;
-            SelectedCategory = savedGame.Configuration.CategoryName;
+            _currentGameConfig = savedGame.Configuration;
 
             Cards.Clear();
             foreach (var cardState in savedGame.Cards)
@@ -246,17 +358,17 @@ namespace Memoryy.ViewModels
                 });
             }
 
-            TimeRemaining = savedGame.Configuration.TimeLimit -
-                           (int)(DateTime.Now - savedGame.Configuration.StartTime).TotalSeconds;
+            TimeLeft = savedGame.Configuration.TimeLimit -
+                       (int)(DateTime.Now - savedGame.Configuration.StartTime).TotalSeconds;
 
-            if (TimeRemaining <= 0)
+            if (TimeLeft <= 0)
             {
                 MessageBox.Show("Timpul pentru acest joc salvat a expirat!", "Game Over",
                               MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
-            _gameTimer.Start();
+            _timer.Start();
             MessageBox.Show("Joc încărcat cu succes!", "Încărcare", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
@@ -266,22 +378,31 @@ namespace Memoryy.ViewModels
             statisticsWindow.ShowDialog();
         }
 
+        private void StartCustomGame()
+        {
+            var viewModel = new CustomGameViewModel();
+            viewModel.OnGameConfigurationSelected += (s, config) =>
+            {
+                config.CategoryName = _currentGameConfig.CategoryName;
+                _currentGameConfig = config;
+                InitializeGame();
+            };
+
+            var window = new CustomGameWindow(viewModel);
+            window.ShowDialog();
+        }
+
         private void ShowAbout()
         {
             MessageBox.Show(
                 "Memory Game\n\n" +
-                "Student: [Numele tău]\n" +
-                "Email: [email@institutionala.ro]\n" +
-                "Grupa: [Numărul grupei]\n" +
-                "Specializarea: [Specializarea]",
+                "Student: Dragomir Cezar Andrei\n" +
+                "Email: cezar.dragomir@student.unitbv.ro\n" +
+                "Grupa: 10LF232\n" +
+                "Specializare: Informatică",
                 "Despre",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
-        }
-
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

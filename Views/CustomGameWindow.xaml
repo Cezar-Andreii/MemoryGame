@@ -5,97 +5,97 @@
         Height="300"
         Width="400"
         WindowStartupLocation="CenterOwner">
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <Grid Margin="20">
+                <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-        <TextBlock Text="Configurare Joc Personalizat"
-                   FontSize="20"
-                   FontWeight="Bold"
-                   Margin="0,0,0,20"/>
+                <TextBlock Text="Configurare Joc Personalizat"
+                           FontSize="20"
+                           FontWeight="Bold"
+                           Margin="0,0,0,20"/>
 
-        <StackPanel Grid.Row="1"
-                Margin="0,0,0,20">
-            <TextBlock Text="Dimensiuni predefinite:"
-                    Margin="0,0,0,5"/>
-            <WrapPanel>
-                <Button Content="2x4"
-                        Margin="0,0,10,5"
-                        Padding="10,5"
-                        Click="PresetButton_Click"/>
-                <Button Content="3x4"
-                        Margin="0,0,10,5"
-                        Padding="10,5"
-                        Click="PresetButton_Click"/>
-                <Button Content="4x3"
-                        Margin="0,0,10,5"
-                        Padding="10,5"
-                        Click="PresetButton_Click"/>
-                <Button Content="5x4"
-                        Margin="0,0,10,5"
-                        Padding="10,5"
-                        Click="PresetButton_Click"/>
-                <Button Content="6x4"
-                        Margin="0,0,10,5"
-                        Padding="10,5"
-                        Click="PresetButton_Click"/>
-            </WrapPanel>
-        </StackPanel>
+                <StackPanel Grid.Row="1"
+                            Margin="0,0,0,20">
+                        <TextBlock Text="Dimensiuni predefinite:"
+                                   Margin="0,0,0,5"/>
+                        <WrapPanel>
+                                <Button Content="2x4"
+                                        Margin="0,0,10,5"
+                                        Padding="10,5"
+                                        Click="PresetButton_Click"/>
+                                <Button Content="3x4"
+                                        Margin="0,0,10,5"
+                                        Padding="10,5"
+                                        Click="PresetButton_Click"/>
+                                <Button Content="4x3"
+                                        Margin="0,0,10,5"
+                                        Padding="10,5"
+                                        Click="PresetButton_Click"/>
+                                <Button Content="5x4"
+                                        Margin="0,0,10,5"
+                                        Padding="10,5"
+                                        Click="PresetButton_Click"/>
+                                <Button Content="6x4"
+                                        Margin="0,0,10,5"
+                                        Padding="10,5"
+                                        Click="PresetButton_Click"/>
+                        </WrapPanel>
+                </StackPanel>
 
-        <Grid Grid.Row="2"
-                Margin="0,0,0,20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+                <Grid Grid.Row="2"
+                      Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-            <TextBlock Text="Rânduri (2-6):"
-                    Grid.Row="0"
-                    Grid.Column="0"
-                    Margin="0,0,10,10"/>
-            <TextBox Text="{Binding Rows, UpdateSourceTrigger=PropertyChanged}"
-                     Grid.Row="0"
-                    Grid.Column="1"
-                    Margin="0,0,0,10"/>
+                        <TextBlock Text="Rânduri (2-6):"
+                                   Grid.Row="0"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,10"/>
+                        <TextBox Text="{Binding Rows, UpdateSourceTrigger=PropertyChanged}"
+                                 Grid.Row="0"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,10"/>
 
-            <TextBlock Text="Coloane (2-6):"
-                    Grid.Row="1"
-                    Grid.Column="0"
-                    Margin="0,0,10,10"/>
-            <TextBox Text="{Binding Columns, UpdateSourceTrigger=PropertyChanged}"
-                     Grid.Row="1"
-                    Grid.Column="1"
-                    Margin="0,0,0,10"/>
+                        <TextBlock Text="Coloane (2-6):"
+                                   Grid.Row="1"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,10"/>
+                        <TextBox Text="{Binding Columns, UpdateSourceTrigger=PropertyChanged}"
+                                 Grid.Row="1"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,10"/>
 
-            <TextBlock Text="Timp (secunde):"
-                    Grid.Row="2"
-                    Grid.Column="0"
-                    Margin="0,0,10,0"/>
-            <TextBox Text="{Binding TimeLimit, UpdateSourceTrigger=PropertyChanged}"
-                     Grid.Row="2"
-                    Grid.Column="1"/>
+                        <TextBlock Text="Timp (secunde):"
+                                   Grid.Row="2"
+                                   Grid.Column="0"
+                                   Margin="0,0,10,0"/>
+                        <TextBox Text="{Binding TimeLimit, UpdateSourceTrigger=PropertyChanged}"
+                                 Grid.Row="2"
+                                 Grid.Column="1"/>
+                </Grid>
+
+                <StackPanel Grid.Row="3"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom">
+                        <Button Content="Închide"
+                                Command="{Binding CancelCommand}"
+                                Margin="0,0,10,0"
+                                Padding="20,5"/>
+                        <Button Content="Începe Joc"
+                                Command="{Binding StartCommand}"
+                                Padding="20,5"/>
+                </StackPanel>
         </Grid>
-
-        <StackPanel Grid.Row="3"
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Bottom">
-            <Button Content="Anulare"
-                    Command="{Binding CancelCommand}"
-                    Margin="0,0,10,0"
-                    Padding="20,5"/>
-            <Button Content="Start"
-                    Command="{Binding StartCommand}"
-                    Padding="20,5"/>
-        </StackPanel>
-    </Grid>
 </Window> 

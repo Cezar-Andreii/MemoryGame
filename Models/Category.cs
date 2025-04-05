@@ -5,11 +5,11 @@ namespace Memoryy.Models
     public class Category
     {
         public string Name { get; set; }
-        public List<string> ImagePaths { get; set; }
+        public List<string> ImagePaths { get; set; } = new List<string>();
 
-        public Category()
+        public override string ToString()
         {
-            ImagePaths = new List<string>();
+            return Name;
         }
     }
 }

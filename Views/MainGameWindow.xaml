@@ -5,6 +5,10 @@
         Height="600"
         Width="800"
         WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
+
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="File">
@@ -22,14 +26,10 @@
                 <MenuItem Header="Save Game"
                           Command="{Binding SaveGameCommand}"/>
                 <MenuItem Header="Statistics"
-                          Command="{Binding ShowStatisticsCommand}"/>
+                          Command="{Binding StatisticsCommand}"/>
                 <Separator/>
                 <MenuItem Header="Exit"
                           Click="ExitMenuItem_Click"/>
-            </MenuItem>
-            <MenuItem Header="Options">
-                <MenuItem Header="Standard"/>
-                <MenuItem Header="Custom"/>
             </MenuItem>
             <MenuItem Header="Help">
                 <MenuItem Header="About"
@@ -46,11 +46,14 @@
             <StackPanel Grid.Row="0"
                         Orientation="Horizontal"
                         Margin="10">
-                <TextBlock Text="Time Remaining: "
-                           VerticalAlignment="Center"/>
-                <TextBlock Text="{Binding TimeRemaining}"
+                <TextBlock Text="{Binding TimeLeftText}"
                            VerticalAlignment="Center"
-                           Margin="5,0,0,0"/>
+                           Margin="0,0,20,0"/>
+                <TextBlock Text="{Binding MovesText}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,20,0"/>
+                <TextBlock Text="{Binding PairsText}"
+                           VerticalAlignment="Center"/>
             </StackPanel>
 
             <ItemsControl Grid.Row="1"
@@ -58,33 +61,33 @@
                           Margin="10">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <UniformGrid Rows="{Binding DataContext.CurrentConfig.Rows, 
-                                    RelativeSource={RelativeSource AncestorType=Window}}"
-                                     Columns="{Binding DataContext.CurrentConfig.Columns, 
-                                    RelativeSource={RelativeSource AncestorType=Window}}"/>
+                        <UniformGrid Rows="{Binding CurrentGameConfig.Rows}"
+                                     Columns="{Binding CurrentGameConfig.Columns}"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
+
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Width="100"
-                                Height="100"
-                                Margin="5"
-                                Background="LightBlue"
-                                CornerRadius="5">
-                            <Grid>
-                                <Image Source="{Binding ImagePath}"
-                                       Stretch="UniformToFill"
-                                       Opacity="{Binding IsFlipped, Converter={StaticResource BooleanToOpacityConverter}}"/>
-                                <Rectangle Fill="Blue"
-                                           Opacity="{Binding IsFlipped, Converter={StaticResource InverseBooleanToOpacityConverter}}"/>
-                            </Grid>
-                            <Border.InputBindings>
-                                <MouseBinding MouseAction="LeftClick"
-                                              Command="{Binding DataContext.CardClickCommand, 
-                                            RelativeSource={RelativeSource AncestorType=Window}}"
-                                              CommandParameter="{Binding}"/>
-                            </Border.InputBindings>
-                        </Border>
+                        <Button Command="{Binding DataContext.CardClickCommand, 
+                                        RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                CommandParameter="{Binding}"
+                                Margin="5">
+                            <Border Width="100"
+                                    Height="100"
+                                    Background="LightBlue"
+                                    CornerRadius="5">
+                                <Grid>
+                                    <Rectangle Fill="Blue"
+                                               Visibility="{Binding IsFlipped, 
+                                                      Converter={StaticResource BooleanToVisibilityConverter}, 
+                                                      ConverterParameter=Inverse}"/>
+                                    <Image Source="{Binding ImagePath}"
+                                           Stretch="Uniform"
+                                           Visibility="{Binding IsFlipped, 
+                                                      Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                </Grid>
+                            </Border>
+                        </Button>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

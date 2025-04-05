@@ -52,7 +52,7 @@ namespace Memoryy.Views {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/Memoryy;V1.0.0.0;component/views/loginwindow.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/Memoryy;component/views/loginwindow.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\..\Views\LoginWindow.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);
